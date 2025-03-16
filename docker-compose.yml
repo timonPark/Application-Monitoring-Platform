@@ -12,6 +12,19 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
     networks:
       - prometheus
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./promtail/promtail-config.yaml:/etc/promtail-config.yaml
+      - /var/logs/application:/var/logs/application
+    command: -config.file=/etc/promtail-config.yaml
+    depends_on:
+      - loki
+    networks:
+      - loki
   loki:
     image: grafana/loki:latest
     container_name: loki

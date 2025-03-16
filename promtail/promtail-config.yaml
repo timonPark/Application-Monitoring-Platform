@@ -1,10 +1,7 @@
-global:
-  file_watch_config:
-    min_poll_frequency: 250
-    max_poll_frequency: 250
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
+  enable_runtime_reload: true
 
 positions:
   filename: /tmp/positions.yaml
@@ -19,9 +16,35 @@ scrape_configs:
         labels:
           job: spring-boot-logs
           __path__: /var/logs/application/springboot/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            log: message
+    relabel_configs:
+      - source_labels: [__path__]
+        target_label: __filename__
   - job_name: nestjs-logs
     static_configs:
       - targets: ['localhost']
         labels:
           job: nestjs-logs
           __path__: /var/logs/application/nestjs/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            message: message
+            requestId: requestId
+      - labels:
+          level: level    # level을 레이블로 추가
+          message: message    # message
+          requestId: requestId  # requestId를 레이블로 추가
+          log_timestamp: timestamp
+      - timestamp:
+          source: log_timestamp  # timestamp 필드를 기준으로 타임스탬프 처리
+          format: "2025-03-16T10:51:29.983Z"
+          location: "Asia/Seoul"
+    relabel_configs:
+      - source_labels: [__path__]
+        target_label: __filename__
